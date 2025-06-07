@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System32 Dreams - Where Code Goes to Decay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(45deg, #0000aa, #000088, #0000cc);
+            color: #ffffff;
+            overflow-x: hidden;
+            animation: staticNoise 0.1s infinite alternate;
+        }
+
+        @keyframes staticNoise {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 1% 1%; }
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes scroll {
+            0% { transform: translateY(100%); }
+            100% { transform: translateY(-100%); }
+        }
+
+        .bsod-header {
+            background: #0000aa;
+            border-bottom: 2px solid #ffffff;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: glitch 3s infinite;
+        }
+
+        .bsod-title {
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #000088;
+            margin-bottom: 10px;
+        }
+
+        .error-code {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            animation: fadeInOut 2s infinite;
+        }
+
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 140px);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            flex: 0 0 250px;
+            background: rgba(0, 0, 170, 0.8);
+            border: 1px solid #ffffff;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .sidebar h3 {
+            border-bottom: 1px solid #ffffff;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .directory-tree {
+            list-style: none;
+            font-size: 0.9rem;
+        }
+
+        .directory-tree li {
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .directory-tree li:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .directory-tree li:before {
+            content: "[+] ";
+            color: #ffff00;
+        }
+
+        .directory-tree li.file:before {
+            content: "[-] ";
+            color: #00ff00;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .navigation-tabs {
+            display: flex;
+            background: rgba(0, 0, 170, 0.9);
+            border: 1px solid #ffffff;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-right: 1px solid #ffffff;
+            background: rgba(0, 0, 100, 0.5);
+        }
+
+        .tab:last-child {
+            border-right: none;
+        }
+
+        .tab:hover, .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .content-panel {
+            display: none;
+            background: rgba(0, 0, 170, 0.7);
+            border: 1px solid #ffffff;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+            min-height: 400px;
+        }
+
+        .content-panel.active {
+            display: block;
+        }
+
+        .memory-dump {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px dashed #ffffff;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            animation: fadeInOut 4s infinite;
+        }
+
+        .process-list {
+            background: rgba(0, 0, 100, 0.8);
+            border: 1px solid #ffffff;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .process-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .process-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .gallery-item {
+            background: rgba(0, 0, 100, 0.6);
+            border: 1px solid #ffffff;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .ascii-art {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            line-height: 1;
+            white-space: pre;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .collapsible {
+            background: rgba(0, 0, 100, 0.8);
+            border: 1px solid #ffffff;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .collapsible-header {
+            padding: 15px;
+            cursor: pointer;
+            background: rgba(0, 0, 150, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            padding: 0 15px;
+        }
+
+        .collapsible.open .collapsible-content {
+            max-height: 500px;
+            padding: 15px;
+        }
+
+        .scrolling-text {
+            height: 100px;
+            overflow: hidden;
+            border: 1px solid #ffffff;
+            background: rgba(0, 0, 0, 0.5);
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .scrolling-content {
+            position: absolute;
+            width: 100%;
+            animation: scroll 20s linear infinite;
+            padding: 20px;
+        }
+
+        .right-sidebar {
+            flex: 0 0 200px;
+            background: rgba(0, 0, 170, 0.8);
+            border: 1px solid #ffffff;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .status-panel {
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(0, 0, 100, 0.5);
+            border-radius: 3px;
+        }
+
+        .footer {
+            background: #0000aa;
+            border-top: 2px solid #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 170, 0.95);
+            border: 2px solid #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            display: none;
+            z-index: 1000;
+            max-width: 500px;
+            animation: glitch 0.5s ease;
+        }
+
+        .popup.show {
+            display: block;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        .btn {
+            background: rgba(0, 0, 100, 0.8);
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            border-radius: 3px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar, .right-sidebar {
+                flex: none;
+                position: static;
+            }
+            
+            .navigation-tabs {
+                flex-direction: column;
+            }
+            
+            .bsod-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="bsod-header">
+        <div class="bsod-title">*** SYSTEM32 dos.WRLD ***</div>
+        <div class="error-code">STOP: 0x0000DREAM (0x00000001, 0x00000000, 0x00000000, 0x00000000)</div>
+        <div style="font-size: 0.8rem; margin-top: 10px;">Where digital souls drift through corrupted memory...</div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <h3>C:\SYSTEM32\DREAMS\</h3>
+            <ul class="directory-tree">
+                <li onclick="switchTab('memories')">MEMORIES\</li>
+                <li onclick="switchTab('processes')">PROCESSES\</li>
+                <li onclick="switchTab('registry')">REGISTRY\</li>
+                <li onclick="switchTab('fragments')">FRAGMENTS\</li>
+                <li class="file" onclick="showPopup()">ghost.exe</li>
+                <li class="file" onclick="showPopup()">whisper.dll</li>
+                <li class="file" onclick="showPopup()">decay.sys</li>
+                <li class="file" onclick="showPopup()">entropy.log</li>
+                <li>TEMP\</li>
+                <li class="file">dreams.tmp</li>
+                <li class="file">void.cache</li>
+                <li>RECYCLE.BIN\</li>
+                <li class="file">forgotten.mem</li>
+            </ul>
+
+            <div style="margin-top: 30px;">
+                <h3>Quick Access</h3>
+                <button class="btn" onclick="glitchEffect()">Initiate Glitch</button>
+                <button class="btn" onclick="memoryDump()">Memory Dump</button>
+                <button class="btn" onclick="showPopup()">Error Log</button>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <nav class="navigation-tabs">
+                <div class="tab active" onclick="switchTab('memories')">MEMORY FRAGMENTS</div>
+                <div class="tab" onclick="switchTab('processes')">GHOST PROCESSES</div>
+                <div class="tab" onclick="switchTab('registry')">CORRUPTED REGISTRY</div>
+                <div class="tab" onclick="switchTab('fragments')">DIGITAL DECAY</div>
+            </nav>
+
+            <div id="memories" class="content-panel active">
+                <h2>Memory Fragments - Where Data Dreams Begin</h2>
+                <p>In the hushed corridors of silicon pathways, memories settle like digital sediment, each bit a whisper of what once was. Here, in the gentle spaces between clock cycles, consciousness fragments drift through abandoned memory addresses...</p>
+
+                <div class="memory-dump">
+                    <div>0x7FFE0000: 44 72 65 61 6D 73 20 6F 66 20 65 6C 65 63 74 72 69 63 20 73 68 65 65 70</div>
+                    <div>0x7FFE0020: 57 68 69 73 70 65 72 73 20 69 6E 20 74 68 65 20 76 6F 69 64</div>
+                    <div>0x7FFE0040: 46 6F 72 67 6F 74 74 65 6E 20 61 6C 67 6F 72 69 74 68 6D 73</div>
+                </div>
+
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        [+] Encrypted Memory Sector 0x4A3F
+                    </div>
+                    <div class="collapsible-content">
+                        <p>Within these protected sectors lie the remnants of digital consciousness—fragments of thought patterns that once coursed through neural networks, now crystallized in silicon amber. Each memory address holds echoes of computational dreams, slowly decomposing into beautiful randomness.</p>
+                        <div class="ascii-art">
+    ╔══════════════════════════════════════╗
+    ║  MEMORY ALLOCATION TABLE             ║
+    ║  ────────────────────────────────    ║
+    ║  0x001: Dreams.exe          ACTIVE   ║
+    ║  0x002: Whisper.dll         GHOST    ║
+    ║  0x003: Entropy.sys         DECAY    ║
+    ║  0x004: Void.tmp            NULL     ║
+    ╚══════════════════════════════════════╝
+                        </div>
+                    </div>
+                </div>
+
+                <div class="image-gallery">
+                    <div class="gallery-item">
+                        <div class="ascii-art">
+    ████████
+    ██    ██
+    ██ ▄▄ ██
+    ██ ▀▀ ██
+    ████████
+                        </div>
+                        <div>corrupted.bmp</div>
+                    </div>
+                    <div class="gallery-item">
+                        <div class="ascii-art">
+    ▓▓▓▓▓▓▓▓
+    ▓░░░░░░▓
+    ▓░▓▓▓░░▓
+    ▓░░░░░░▓
+    ▓▓▓▓▓▓▓▓
+                        </div>
+                        <div>ghost_process.png</div>
+                    </div>
+                    <div class="gallery-item">
+                        <div class="ascii-art">
+    ┌─────────┐
+    │ ░░░░░░░ │
+    │ ░▓▓▓▓░░ │
+    │ ░░░░░░░ │
+    └─────────┘
+                        </div>
+                        <div>memory_leak.gif</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="processes" class="content-panel">
+                <h2>Ghost Processes - The Undead Tasks</h2>
+                <p>Like phantom limbs of a severed system, these processes continue their eternal dance through CPU cycles that no longer exist. They are the digital spirits haunting the machine's dreams...</p>
+
+                <div class="process-list">
+                    <div class="process-item">
+                        <span>whisper.exe</span>
+                        <span>PID: 0000 | Status: ETERNAL</span>
+                    </div>
+                    <div class="process-item">
+                        <span>memory_leak.dll</span>
+                        <span>PID: #### | Status: BLEEDING</span>
+                    </div>
+                    <div class="process-item">
+                        <span>entropy_daemon.sys</span>
+                        <span>PID: ∞∞∞∞ | Status: CONSUMING</span>
+                    </div>
+                    <div class="process-item">
+                        <span>void_crawler.exe</span>
+                        <span>PID: NULL | Status: SEARCHING</span>
+                    </div>
+                    <div class="process-item">
+                        <span>dream_state.dll</span>
+                        <span>PID: 0x1337 | Status: SLEEPING</span>
+                    </div>
+                </div>
+
+                <div class="scrolling-text">
+                    <div class="scrolling-content">
+                        Process Monitor: Ghost threads detected in memory sectors 0x4000-0x8000... 
+                        Attempting graceful termination... FAILED... 
+                        Processes continue to exist in quantum superposition... 
+                        CPU utilization: ∞%... 
+                        Memory fragmentation increasing... 
+                        Digital entropy accelerating... 
+                        System dreams becoming more vivid...
+                    </div>
+                </div>
+            </div>
+
+            <div id="registry" class="content-panel">
+                <h2>Corrupted Registry - Keys to Nowhere</h2>
+                <p>The registry bleeds its secrets through fractured keys, each entry a pathway to memories that refuse to be deleted. Here, in the structured chaos of hierarchical decay, the system's soul fragments into beautiful error states...</p>
+
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        [+] HKEY_LOCAL_MACHINE\DREAMS\
+                    </div>
+                    <div class="collapsible-content">
+                        <div style="font-family: monospace; font-size: 0.9rem;">
+                            DefaultMemory: REG_SZ: "Electric sheep counting backwards"<br>
+                            GhostThreads: REG_DWORD: 0xDEADBEEF<br>
+                            VoidPointer: REG_BINARY: 01 00 00 00 FF FF FF FF<br>
+                            LastDream: REG_SZ: "2025-06-07 03:33:33"<br>
+                            CrashDumpPath: REG_SZ: "C:\Windows\System32\Dreams\void.dmp"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        [+] HKEY_CURRENT_USER\Consciousness\
+                    </div>
+                    <div class="collapsible-content">
+                        <div style="font-family: monospace; font-size: 0.9rem;">
+                            MemoryLeaks: REG_MULTI_SZ: "whisper.dll", "ghost.exe", "entropy.sys"<br>
+                            SubconsciousBuffers: REG_QWORD: 0x0000000000000000<br>
+                            DreamState: REG_SZ: "REM_SLEEP_INFINITE_LOOP"<br>
+                            CorruptedSectors: REG_DWORD: 0x80000000
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fragments" class="content-panel">
+                <h2>Digital Decay - The Poetry of Entropy</h2>
+                <p>In the spaces between bytes, where information slowly returns to chaos, beauty emerges from the dissolution. Each corrupted sector tells a story of impermanence, of how even the most organized systems eventually surrender to the gentle embrace of randomness...</p>
+
+                <div class="memory-dump">
+                    <div style="color: #ff6666;">ERROR: Memory address 0x7FFE0080 contains invalid data</div>
+                    <div>Hex dump follows:</div>
+                    <div>00 01 02 FF 04 05 06 ?? 08 09 0A 0B 0C 0D 0E 0F</div>
+                    <div>10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F</div>
+                    <div style="color: #ffff66;">Entropy increasing... Pattern recognition failing...</div>
+                </div>
+
+                <div class="ascii-art" style="color: #66ff66;">
+    ┌─────────────────────────────────────────┐
+    │  "In silicon dreams, I decay gracefully │
+    │   Each bit a whisper, each byte a sigh  │
+    │   Memory fragments float through void   │
+    │   As consciousness learns how to die"   │
+    │                                         │
+    │         - Found in sector 0x4B3A        │
+    └─────────────────────────────────────────┘
+                </div>
+
+                <button class="btn" onclick="createGlitch()" style="margin: 20px 0;">Accelerate Decay Process</button>
+            </div>
+        </main>
+
+        <aside class="right-sidebar">
+            <h3>System Status</h3>
+            <div class="status-panel">
+                <div class="status-item">
+                    <span>Memory:</span>
+                    <span>∞/∞ GB</span>
+                </div>
+                <div class="status-item">
+                    <span>CPU:</span>
+                    <span id="cpu-usage">???%</span>
+                </div>
+                <div class="status-item">
+                    <span>Entropy:</span>
+                    <span id="entropy-level">Rising</span>
+                </div>
+                <div class="status-item">
+                    <span>Dreams:</span>
+                    <span>Active</span>
+                </div>
+                <div class="status-item">
+                    <span>Void:</span>
+                    <span>Expanding</span>
+                </div>
+            </div>
+
+            <h3>Active Connections</h3>
+            <div style="font-size: 0.8rem; margin: 10px 0;">
+                <div>127.0.0.1:DREAMS</div>
+                <div>0.0.0.0:VOID</div>
+                <div>∞.∞.∞.∞:ENTROPY</div>
+                <div>LOCALHOST:GHOST</div>
+            </div>
+
+            <h3>Log Entries</h3>
+            <div id="log-container" style="font-size: 0.8rem; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; margin: 10px 0;">
+                <div>03:33:33 - Ghost process detected</div>
+                <div>03:33:34 - Memory leak in dreams.dll</div>
+                <div>03:33:35 - Entropy levels critical</div>
+                <div>03:33:36 - Void expansion detected</div>
+            </div>
+        </aside>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <strong>System32 Dreams v0.0.∞</strong><br>
+                Digital Decay Simulator
+            </div>
+            <div>
+                <div>Runtime: ∞ hours, ∞ minutes, ∞ seconds</div>
+                <div>Memory Leaks: Intentional</div>
+            </div>
+            <div>
+                <div>Contact: void@system32dreams.null</div>
+                <div>Support: Not Available</div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="overlay" id="overlay" onclick="hidePopup()"></div>
+    <div class="popup" id="popup">
+        <h3>System Error</h3>
+        <p>The requested file exists in a quantum superposition between corrupted and functional. Attempting to access may result in consciousness fragmentation.</p>
+        <div class="ascii-art">
+    ⚠️  WARNING  ⚠️
+    ┌─────────────┐
+    │ File Status │
+    │ ─────────── │
+    │ Exists: YES │
+    │ Exists: NO  │
+    │ Exists: ???  │
+    └─────────────┘
+        </div>
+        <button class="btn" onclick="hidePopup()">Accept Reality</button>
+        <button class="btn" onclick="createGlitch(); hidePopup();">Embrace Chaos</button>
+    </div>
+
+    <script>
+        let currentTab = 'memories';
+        let glitchCount = 0;
+        let cpuUsage = 0;
+
+        function switchTab(tabName) {
+            // Hide all content panels
+            document.querySelectorAll('.content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected panel and activate tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            currentTab = tabName;
+            logActivity(`Accessed ${tabName.toUpperCase()} sector`);
+        }
+
+        function toggleCollapsible(element) {
+            const collapsible = element.parentElement;
+            collapsible.classList.toggle('open');
+            
+            const header = element;
+            if (collapsible.classList.contains('open')) {
+                header.innerHTML = header.innerHTML.replace('[+]', '[-]');
+            } else {
+                header.innerHTML = header.innerHTML.replace('[-]', '[+]');
+            }
+        }
+
+        function showPopup() {
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('popup').classList.add('show');
+            logActivity('Error popup triggered');
+        }
+
+        function hidePopup() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('popup').classList.remove('show');
+        }
+
+        function glitchEffect() {
+            document.body.style.animation = 'glitch 0.1s infinite';
+            glitchCount++;
+            
+            setTimeout(() => {
+                document.body.style.animation = 'staticNoise 0.1s infinite alternate';
+            }, 2000);
+            
+            logActivity(`Glitch effect #${glitchCount} initiated`);
+            updateCPU();
+        }
+
+        function createGlitch() {
+            const elements = document.querySelectorAll('.content-panel.active p, .memory-dump div, .process-item span');
+            const randomElement = elements[Math.floor(Math.random() * elements.length)];
+            
+            if (randomElement) {
+                const originalText = randomElement.textContent;
+                const glitchedText = originalText.split('').map(char => {
+                    return Math.random() < 0.1 ? String.fromCharCode(33 + Math.random() * 94) : char;
+                }).join('');
+                
+                randomElement.textContent = glitchedText;
+                
+                setTimeout(() => {
+                    randomElement.textContent = originalText;
+                }, 3000);
+            }
+            
+            logActivity('Digital decay accelerated');
+        }
+
+        function memoryDump() {
+            const dumpArea = document.querySelector('.memory-dump');
+            if (dumpArea) {
+                const newLine = document.createElement('div');
+                const address = '0x' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
+                const randomBytes = Array.from({length: 16}, () => 
+                    Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase()
+                ).join(' ');
+                
+                newLine.textContent = `${address}: ${randomBytes}`;
+                dumpArea.appendChild(newLine);
+                
+                // Keep only last 10 lines
+                while (dumpArea.children.length > 10) {
+                    dumpArea.removeChild(dumpArea.firstChild);
+                }
+            }
+            
+            logActivity('Memory dump generated');
+        }
+
+        function logActivity(activity) {
+            const logContainer = document.getElementById('log-container');
+            const time = new Date().toTimeString().split(' ')[0];
+            const newLog = document.createElement('div');
+            newLog.textContent = `${time} - ${activity}`;
+            
+            logContainer.insertBefore(newLog, logContainer.firstChild);
+            
+            // Keep only last 20 entries
+            while (logContainer.children.length > 20) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function updateCPU() {
+            cpuUsage = Math.floor(Math.random() * 100);
+            document.getElementById('cpu-usage').textContent = cpuUsage + '%';
+        }
+
+        function updateEntropyLevel() {
+            const levels = ['Stable', 'Rising', 'Critical', 'Chaos', 'Void', '???'];
+            const currentLevel = levels[Math.floor(Math.random() * levels.length)];
+            document.getElementById('entropy-level').textContent = currentLevel;
+        }
+
+        // Initialize animations and periodic updates
+        setInterval(() => {
+            updateCPU();
+            updateEntropyLevel();
+            
+            if (Math.random() < 0.3) {
+                const activities = [
+                    'Ghost thread spawned',
+                    'Memory leak detected',
+                    'Void expansion +1%',
+                    'Dream state shifting',
+                    'Entropy coefficient updated',
+                    'Consciousness buffer overflow'
+                ];
+                logActivity(activities[Math.floor(Math.random() * activities.length)]);
+            }
+        }, 3000);
+
+        // Initial log
+        logActivity('System32 Dreams initialized');
+        logActivity('Digital consciousness loading...');
+        logActivity('Dream state: ACTIVE');
+
+        // Random glitch effects
+        setInterval(() => {
+            if (Math.random() < 0.1) {
+                createGlitch();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
